@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>GitHub ZIP 파일 리더</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; padding: 20px; max-width: 800px; margin: auto; }
+        h1 { color: #333; }
+        .control-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input[type="password"], select { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
+        button { background-color: #28a745; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
+        button:disabled { background-color: #ccc; cursor: not-allowed; }
+        #status { margin-top: 20px; font-weight: bold; color: #007bff; }
+        #file-content {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ccc;
+            background-color: #f9f9f9;
+            white-space: pre-wrap; /* 줄바꿈과 공백 유지 */
+            min-height: 300px;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+    <h1>GitHub 원격 ZIP 파일 리더</h1>
+    <p>고정된 URL의 암호화된 ZIP 파일에서 파일을 선택하고 암호를 입력하여 내용을 읽습니다.</p>
+
+    <div id="controls" class="hidden">
+        <div class="control-group">
+            <label for="file-selector">1. 읽을 파일 선택:</label>
+            <select id="file-selector"></select>
+        </div>
+
+        <div class="control-group">
+            <label for="password-input">2. 암호 입력:</label>
+            <input type="password" id="password-input" placeholder="ZIP 파일의 암호를 입력하세요">
+        </div>
+
+        <button id="read-button">선택한 파일 읽기</button>
+    </div>
+
+    <div id="status">ZIP 파일 목록을 불러오는 중...</div>
+    <pre id="file-content">파일을 선택하고 암호를 입력한 후 '파일 읽기' 버튼을 누르세요.</pre>
+
+    <!-- zip.js 라이브러리를 CDN을 통해 불러옵니다 -->
+    <script src="https://unpkg.com/@zip.js/zip.js@2.7.47/dist/zip.min.js"></script>
+
+    <script>
+        const { HttpReader, ZipReader, TextWriter, BlobWriter } = zip;
+
+        const zipUrl = 'https://sunnygraphy.github.io/reading/ebooks.zip';
+        const controlsDiv = document.getElementById('controls');
+        const fileSelector = document.getElementById('file-selector');
+        const passwordInput = document.getElementById('password-input');
+        const readButton = document.getElementById('read-button');
+        const statusDiv = document.getElementById('status');
+        const fileContentElement = document.getElementById('file-content');
+
+        let zipEntries = [];
+
+        // 1. 페이지 로드 시 원격 ZIP 파일의 목록을 가져옵니다.
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const zipReader = new ZipReader(new HttpReader(zipUrl));
+                // getEntries()는 암호 없이 파일 목록을 가져옵니다.
+                zipEntries = await zipReader.getEntries();
+                await zipReader.close();
+
+                if (zipEntries.length > 0) {
+                    zipEntries.forEach(entry => {
+                        if (!entry.directory) { // 폴더는 제외
+                            const option = document.createElement('option');
+                            option.value = entry.filename;
+                            option.textContent = entry.filename;
+                            fileSelector.appendChild(option);
+                        }
+                    });
+                    statusDiv.textContent = '파일 목록 로딩 완료. 읽을 파일을 선택하세요.';
+                    controlsDiv.classList.remove('hidden');
+                } else {
+                    statusDiv.textContent = 'ZIP 파일이 비어있거나 읽을 수 없습니다.';
+                }
+            } catch (error) {
+                statusDiv.textContent = `오류: ZIP 파일 목록을 불러올 수 없습니다. (${error.message})`;
+                console.error(error);
+            }
+        });
+
+        // 2. '파일 읽기' 버튼 클릭 시 선택한 파일의 내용을 해독하여 표시합니다.
+        readButton.addEventListener('click', async () => {
+            const selectedFilename = fileSelector.value;
+            const password = passwordInput.value;
+
+            if (!selectedFilename) { alert('파일을 선택하세요.'); return; }
+            if (!password) { alert('암호를 입력하세요.'); return; }
+
+            try {
+                const selectedEntry = zipEntries.find(entry => entry.filename === selectedFilename);
+
+                // 1. 파일 데이터를 바이너리(Blob) 형태로 읽기 위해 BlobWriter를 사용합니다.
+                const dataWriter = new BlobWriter();
+                await selectedEntry.getData(dataWriter, { password });
+                const blob = await dataWriter.getData();
+
+                // 2. 읽어온 Blob 데이터를 ArrayBuffer로 변환합니다.
+                const arrayBuffer = await blob.arrayBuffer();
+
+                // 3. TextDecoder를 사용해 EUC-KR 인코딩을 UTF-8 텍스트로 변환합니다.
+                const decoder = new TextDecoder('euc-kr');
+                const content = decoder.decode(arrayBuffer);
+
+                fileContentElement.textContent = content;
+                statusDiv.textContent = `'${selectedFilename}' 파일 읽기 완료.`;
+            } catch (error) {
+                fileContentElement.textContent = `오류: 파일을 읽거나 암호를 해독할 수 없습니다. 암호가 올바른지 확인하세요.\n(${error.message})`;
+                console.error(error);
+            }
+        });
+    </script>
+
+</body>
+</html>
