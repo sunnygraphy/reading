@@ -4,12 +4,13 @@
     <meta charset="UTF-8">
     <title>GitHub ZIP 파일 리더</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; padding: 20px; max-width: 800px; margin: auto; }
+        /* 모바일 전용 스타일 */
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; padding: 15px; font-size: 1.2em; }
         h1 { color: #333; }
         .control-group { margin-bottom: 15px; }
         label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input[type="password"], select { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
-        button { background-color: #28a745; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
+        input[type="password"], select, button { width: 100%; padding: 15px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; font-size: 1em; }
+        button { background-color: #28a745; color: white; border: none; cursor: pointer; }
         button:disabled { background-color: #ccc; cursor: not-allowed; }
         #status { margin-top: 20px; font-weight: bold; color: #007bff; }
         #file-content {
@@ -23,18 +24,6 @@
             overflow-y: auto;
         }
         .hidden { display: none; }
-
-        /* 모바일 화면을 위한 미디어 쿼리 */
-        @media (max-width: 768px) {
-            body {
-                font-size: 1.2em; /* 기본 폰트 크기를 키웁니다 */
-                padding: 15px;
-            }
-            input[type="password"], select, button {
-                padding: 15px; /* 컨트롤 내부 여백을 늘립니다 */
-                font-size: 1em; /* body 폰트 크기에 맞춰 폰트 크기를 조정합니다 */
-            }
-        }
     </style>
 </head>
 <body>
