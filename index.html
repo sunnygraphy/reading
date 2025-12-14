@@ -23,6 +23,18 @@
             overflow-y: auto;
         }
         .hidden { display: none; }
+
+        /* 모바일 화면을 위한 미디어 쿼리 */
+        @media (max-width: 768px) {
+            body {
+                font-size: 1.2em; /* 기본 폰트 크기를 키웁니다 */
+                padding: 15px;
+            }
+            input[type="password"], select, button {
+                padding: 15px; /* 컨트롤 내부 여백을 늘립니다 */
+                font-size: 1em; /* body 폰트 크기에 맞춰 폰트 크기를 조정합니다 */
+            }
+        }
     </style>
 </head>
 <body>
